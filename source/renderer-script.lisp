@@ -84,6 +84,23 @@ The function can be passed ARGS."
                       (|insertAdjacentHTML| "afterbegin"
                                             (ps:lisp style)))))))
 
+(defun fetch-links (&optional (buffer (current-buffer))
+                      (filtering-rules (list #'host=
+                                             #'distinct-url-path-p
+                                             #'scheme=)))
+  "Return a list of links from BUFFER.
+FILTERING-RULES is a list of functions that take two URLs and return a boolean.
+A link is collected when, for all elements of FILTERING-RULES, the return value
+is non-nil."
+  (with-current-buffer buffer
+    (pflet ((nlinks () (ps:chain document links length))
+            (fetch-link (i) (ps:chain document links (item (ps:lisp i)) href)))
+      (loop for i from 0 to (1- (parse-integer (nlinks)))
+            with url = (url buffer)              ; computed once
+            for link = (quri:uri (fetch-link i)) ; computed on every iteration
+            when (eq-uri-p url link filtering-rules)
+              collect link))))
+
 (export-always 'with-current-html-buffer)
 (defmacro with-current-html-buffer ((buffer-var title mode
                                      &key no-history-p)

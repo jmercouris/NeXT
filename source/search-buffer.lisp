@@ -189,7 +189,7 @@
                             :case-sensitive-p case-sensitive-p))))
 
 (define-command search-buffers (&key case-sensitive-p)
-  "Start a search on the current buffer."
+  "Start a search on buffers."
   (let ((buffers (prompt
                   :prompt "Search buffer(s)"
                   :sources (list (make-instance 'buffer-source ; TODO: Define class?
@@ -205,3 +205,62 @@
                                        :case-sensitive-p case-sensitive-p
                                        :buffer buffer))
                       buffers))))
+
+(defun recursive-search (depth url-list &key case-sensitive-p)
+  "Start a search on URLs that are linked in the current buffer, with arbitrary
+DEPTH."
+  ;; check if the prompt has returned
+  (let* ((urls (alexandria:flatten
+                (nyxt::interactive-recursive-links depth url-list)))
+         (new-buffers)
+         (buffers (mapcar
+                   (lambda (url) (let ((buffer-exists-p (first (buffer-list :url url))))
+                              (if buffer-exists-p
+                                  buffer-exists-p
+                                  (let
+                                      ((new-buffer
+                                         (make-buffer
+                                          :modes (append
+                                                  '(noimage-mode)
+                                                  (active-modes))
+                                          :url url)))
+                                    (push new-buffer new-buffers)
+                                    new-buffer))))
+                   urls)))
+    (mapcar #'nyxt::buffer-delete
+            (set-difference
+             new-buffers
+             (list (slot-value
+                    (first (prompt
+                            :prompt "Search text"
+                            :sources
+                            (mapcar (lambda (buffer)
+                                      (make-instance
+                                       'search-buffer-source
+                                       :name (format nil "Search ~a"
+                                                     (if (url-empty-p (url buffer))
+                                                         (title buffer)
+                                                         (url buffer)))
+                                       :case-sensitive-p case-sensitive-p
+                                       :buffer buffer))
+                                    buffers)))
+                    'buffer))))))
+
+(define-command recursive-search-from-current-buffer (&key case-sensitive-p)
+  "Start a search on URLs that are linked in the current buffer, with arbitrary
+DEPTH."
+  ;; TODO how can the an arbitrary depth be returned from the prompter as well
+  ;; as providing suggestions.
+  (recursive-search (parse-integer
+                     (first
+                      (prompt
+                       :prompt "Choose Depth"
+                       :sources (list (make-instance 'prompter:raw-source
+                                                     :name "Depth")
+                                      (make-instance 'prompter:source
+												                             :name "Depth"
+												                             :constructor '("1" "2")))
+                       :hide-suggestion-count-p t))
+                     :junk-allowed t)
+                    (list (url (current-buffer)))
+                    :case-sensitive-p case-sensitive-p))

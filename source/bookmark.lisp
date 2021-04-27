@@ -47,23 +47,11 @@ appended to the URL."))
     ("Shortcut" ,(shortcut entry))
     ("Search URL" ,(search-url entry))))
 
-(declaim (ftype (function (quri:uri quri:uri) boolean) equal-url))
-(defun equal-url (url1 url2)
-  "URLs are equal if the URIs are equal, scheme excluded.
-Empty paths are also excluded from the comparison.
-For instance, these are equal:
-- http://example.org
-- https://example.org/"
-  (if (and (quri:uri-http-p url1)
-           (quri:uri-http-p url2))
-      (schemeless-uri= url1 url2)
-      (the (values boolean &optional) (quri:uri= url1 url2))))
-
 (export-always 'equals)
 (defmethod equals ((e1 bookmark-entry) (e2 bookmark-entry))
   "Entries are equal if the hosts and the paths are equal.
 In particular, we ignore the protocol (e.g. HTTP or HTTPS does not matter)."
-  (equal-url (url e1) (url e2)))
+  (url-equal (url e1) (url e2)))
 
 (declaim (ftype (function (quri:uri &key (:title string) (:date (or local-time:timestamp null)) (:tags t)) t) bookmark-add))
 (export-always 'bookmark-add)
@@ -72,7 +60,7 @@ In particular, we ignore the protocol (e.g. HTTP or HTTPS does not matter)."
     (unless (or (url-empty-p url)
                 (string= "about:blank" (render-url url)))
       (multiple-value-bind (entry bookmarks-without-url)
-          (sera:partition (sera:partial #'equal-url url) bookmarks :key #'url)
+          (sera:partition (sera:partial #'url-equal url) bookmarks :key #'url)
         (let* (;; TODO: We should not need ensure-list.  Make sure
                ;; prompter does not return "" on empty input.
                (tags (uiop:ensure-list tags)))
@@ -151,7 +139,7 @@ In particular, we ignore the protocol (e.g. HTTP or HTTPS does not matter)."
 (defun url-bookmark-tags (url)
   "Return the list of tags of the bookmark corresponding to URL."
   (with-data-unsafe (bookmarks (bookmarks-path (current-buffer)))
-    (alex:when-let ((existing (find url bookmarks :key #'url :test #'equal-url)))
+    (alex:when-let ((existing (find url bookmarks :key #'url :test #'url-equal)))
       (tags existing))))
 
 (define-command bookmark-current-page (&optional (buffer (current-buffer)))

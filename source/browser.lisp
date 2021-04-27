@@ -437,7 +437,7 @@ Deal with REQUEST-DATA with the following rules:
          ;; webkit-policy-decision-ignore on a download requestion.
          ;; To work around this, we set the `load-status' to a value other than
          ;; `:loading'.
-         (setf (slot-value buffer 'load-status) :finished)
+         (setf (load-status buffer) :finished)
          nil)
         (t
          (log:debug "Forwarding ~a for buffer ~s" (render-url url) buffer)
@@ -511,52 +511,6 @@ The following example does a few things:
                             (render-url url)))))
              request-data)))
    :name name))
-
-(declaim (ftype (function (string &rest string) (function (quri:uri) boolean))
-                match-scheme match-host match-domain
-                match-file-extension match-regex match-url))
-(export-always 'match-scheme)
-(defun match-scheme (scheme &rest other-schemes)
-  "Return a predicate for URLs matching one of SCHEME or OTHER-SCHEMES."
-  #'(lambda (url)
-      (some (alex:curry #'string= (quri:uri-scheme url))
-            (cons scheme other-schemes))))
-
-(export-always 'match-host)
-(defun match-host (host &rest other-hosts)
-  "Return a predicate for URLs matching one of HOST or OTHER-HOSTS."
-  #'(lambda (url)
-      (some (alex:curry #'string= (quri:uri-host url))
-            (cons host other-hosts))))
-
-(export-always 'match-domain)
-(defun match-domain (domain &rest other-domains)
-  "Return a predicate for URLs matching one of DOMAIN or OTHER-DOMAINS."
-  #'(lambda (url)
-      (some (alex:curry #'string= (quri:uri-domain url))
-            (cons domain other-domains))))
-
-(export-always 'match-file-extension)
-(defun match-file-extension (extension &rest other-extensions)
-  "Return a predicate for URLs matching one of EXTENSION or OTHER-EXTENSIONS."
-  #'(lambda (url)
-      (some (alex:curry #'string= (pathname-type (or (quri:uri-path url) "")))
-            (cons extension other-extensions))))
-
-(export-always 'match-regex)
-(defun match-regex (regex &rest other-regex)
-  "Return a predicate for URLs matching one of REGES or OTHER-REGEX."
-  #'(lambda (url)
-      (some (alex:rcurry #'cl-ppcre:scan (render-url url))
-            (cons regex other-regex))))
-
-(export-always 'match-url)
-(defun match-url (one-url &rest other-urls)
-  "Return a predicate for URLs exactly matching ONE-URL or OTHER-URLS."
-  #'(lambda (url)
-      (some (alex:rcurry #'string= (render-url url))
-            (mapcar (lambda (u) (quri:url-decode u :lenient t))
-                    (cons one-url other-urls)))))
 
 (defun javascript-error-handler (condition)
   (echo-warning "JavaScript error: ~a" condition))
