@@ -11,6 +11,12 @@
    (active-prompt-buffers '()
                           :export nil
                           :documentation "The stack of current prompt buffers.")
+   (prompt-buffer-channel (make-channel) ; TODO: Rename `prompt-buffer-ready-channel'?
+                          :export nil
+                          :documentation "A channel one may listen to if waiting
+for the prompt buffer to be available.
+You should not rely on the value of this channel.
+The channel is popped when a prompt buffer is hidden.")
    (key-stack '()
               :documentation "A stack that keeps track of the key chords a user has pressed.")
    (last-key nil

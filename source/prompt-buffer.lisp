@@ -153,6 +153,7 @@ To access the suggestion instead, see `prompter:selected-suggestion'."
   ;; TODO: Add method that returns if there is only 1 source with no filter.
   (when prompt-buffer
     (push prompt-buffer (active-prompt-buffers (window prompt-buffer)))
+    (calispel:! (prompt-buffer-channel (window prompt-buffer)) prompt-buffer)
     (prompt-render prompt-buffer)
     (run-thread
       (watch-prompt prompt-buffer))
@@ -167,6 +168,8 @@ To access the suggestion instead, see `prompter:selected-suggestion'."
   ;; Note that PROMPT-BUFFER is not necessarily first in the list, e.g. a new
   ;; prompt-buffer was invoked before the old one reaches here.
   (alex:deletef (active-prompt-buffers (window prompt-buffer)) prompt-buffer)
+  ;; The channel values are irrelevant, so is the element order:
+  (calispel:? (prompt-buffer-channel (window prompt-buffer)) 0)
   (when (resumable-p prompt-buffer)
     (flet ((prompter= (prompter1 prompter2)
              (and (string= (prompter:prompt prompter1)

@@ -269,7 +269,8 @@ Such contexts are not needed for internal buffers."
 
        (gtk:gtk-container-add gtk-object box-layout)
        (setf (slot-value *browser* 'last-active-window) window)
-       (gtk:gtk-widget-show-all gtk-object)
+       (unless *headless-p*
+        (gtk:gtk-widget-show-all gtk-object))
        (gobject:g-signal-connect
         gtk-object "key_press_event"
         (lambda (widget event) (declare (ignore widget))
@@ -742,7 +743,8 @@ See `gtk-browser's `modifier-translator' slot."
   "Set BROWSER's WINDOW buffer to BUFFER."
   (gtk:gtk-container-remove (box-layout window) (gtk-object (active-buffer window)))
   (gtk:gtk-box-pack-start (box-layout window) (gtk-object buffer) :expand t)
-  (gtk:gtk-widget-show (gtk-object buffer))
+  (unless *headless-p*
+    (gtk:gtk-widget-show (gtk-object buffer)))
   (when focus
     (gtk:gtk-widget-grab-focus (gtk-object buffer)))
   buffer)
