@@ -1,0 +1,15 @@
+name: Build .rpm package for latest Fedora
+
+on:
+  push:
+    # tags: '*'
+    ## To test, uncomment the line below with branch name used for review.
+    branches: [ rpm ]
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build the Docker image
+      run: docker build . --file Dockerfile --tag ${{ github.repository }}:$(date +%s)
