@@ -125,26 +125,26 @@ to quickly find whatever buffer you are looking for.")
     (:li (command-markup 'switch-buffer-previous) ": Go to previous buffer."))
    (:h3 "Copying and Pasting")
    (:p "Unlike other web browsers, Nyxt provides powerful ways of copying
-   and pasting content via different commands. Starting from classic:")
+   and pasting content via different commands. Starting from the classic:")
    (:ul
     (:li (command-markup 'nyxt/web-mode:copy) ": Copy selected text to clipboard.")
-    (:li (command-markup 'nyxt/web-mode:paste) ": Paste from clipboard into active-element."))
-   (:p "Passing through webpage's metadata:")
+    (:li (command-markup 'nyxt/web-mode:paste) ": Paste from the clipboard into active-element."))
+   (:p "Passing through webpage's data:")
    (:ul
-    (:li (command-markup 'copy-url) ": Save current URL to clipboard.")
-    (:li (command-markup 'copy-title) ": Save current page title to clipboard.")
-    (:li (command-markup 'nyxt/web-mode:copy-placeholder) ": Copy placeholder text to clipboard."))
-   (:p "Leveraging Nyxt's password manager: ")
+    (:li (command-markup 'copy-url) ": Save the current URL to the clipboard.")
+    (:li (command-markup 'copy-title) ": Save current page title to the clipboard.")
+    (:li (command-markup 'nyxt/web-mode:copy-placeholder) ": Copy placeholder text to clipboard.")
+    (:li (command-markup 'nyxt/web-mode:copy-hint-url) ": Show a set of element
+    hints, and copy the URL of the user inputted one."))
+   (:p "Leveraging password managers: ")
    (:ul
     (:li (command-markup 'copy-username) ": Query username and copy to clipboard.")
     (:li (command-markup 'copy-password) ": Query password and copy to clipboard.")
     (:li (command-markup 'copy-password-prompt-details) ": Copy password prompting for all the details without suggestion."))
    (:p "And more: ")
    (:ul
-    (:li (command-markup 'nyxt/web-mode:copy-hint-url) ": Show a set of element
-    hints, and copy the URL of the user inputted one.")
-    (:li (command-markup 'copy-system-information) ": Save system information into the clipboard.")
-    (:li (command-markup 'nyxt/web-mode:paste-from-clipboard-ring) ": Show browser clipboard ring and paste selected entry."))
+    (:li (command-markup 'nyxt/web-mode:paste-from-clipboard-ring) ": Show browser clipboard ring and paste selected entry.")
+    (:li (command-markup 'copy-system-information) ": Save system information into the clipboard. Especially useful when reporting bugs."))
    (:h3 "Link navigation")
    (:p "Link-hinting allows you to visit URLs on a page without using the mouse.
 Invoke one of the commands below: several hints will appear on screen and all
