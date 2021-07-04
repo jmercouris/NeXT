@@ -72,6 +72,10 @@ Most recent messages are first.")
 This history is used if no history is specified for a given prompt buffer.")
    (set-url-history (make-ring)
                     :documentation "The history of all URLs set via set-url")
+   (url->bookmark-visit-threshold :initform 20
+                                  :export t
+                                  :documentation "The threshold for what makes a
+                                  URL be considered frequently visited.")
    (old-prompt-buffers '()
                        :export nil
                        :documentation "The list of old prompt buffers.
