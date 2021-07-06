@@ -471,7 +471,7 @@ Otherwise go forward to the only child."
      (:ul (nyxt::history-html-list :limit limit)))))
 
 (define-command paste ()
-  "Paste from clipboard into active-element."
+  "Paste from clipboard into active element."
   ;; On some systems like Xorg, clipboard pasting happens just-in-time.  So if we
   ;; copy something from the context menu 'Copy' action, upon pasting we will
   ;; retrieve the text from the GTK thread.  This is prone to create
