@@ -231,8 +231,7 @@ bookmarks. If this is the case, prompt the user about bookmarking it."
              (implicit-visits current-url-history))
            (current-url-address
              (render-url (url current-url-history)))
-           (threshold
-             (url->bookmark-visit-threshold *browser*)))
+           (threshold 20))
       (if (and (> implicit-visits-value threshold)
                (bookmarked-url-p current-url-address))
           (if-confirm ("Bookmark ~a?" current-url-address)
