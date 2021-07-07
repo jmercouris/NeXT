@@ -208,35 +208,6 @@ In particular, we ignore the protocol (e.g. HTTP or HTTPS does not matter)."
                                                :marks (url-bookmark-tags url))))))
           (bookmark-add url :tags tags)))))
 
-(defun bookmark-frequent-visit ()
-  "Check if current URL is frequently visited and not included in the
-bookmarks. If this is the case, prompt the user about bookmarking it."
-  (labels ((bookmarked-url-p (url-address)
-            "The local function bookmarked-url-p returns the URL
-            address itself if it is new to the bookmark list or NIL if it is
-            already there."
-            (let ((bookmarks-address-list
-                     (mapcar #'(lambda (e) (render-url (url e)))
-                             (with-data-unsafe (bookmarks (bookmarks-path (current-buffer)))
-                               bookmarks))))
-               (if (member url-address bookmarks-address-list :test #'string=)
-                   nil
-                   url-address))))
-    (let* ((history-entries
-             (with-data-unsafe (history (history-path (current-buffer)))
-               (mapcar #'htree:data (alex:hash-table-keys (htree:entries history)))))
-           (current-url-history
-             (find (url (current-buffer)) history-entries :test #'equalp :key #'url))
-           (implicit-visits-value
-             (implicit-visits current-url-history))
-           (current-url-address
-             (render-url (url current-url-history)))
-           (threshold 20))
-      (if (and (> implicit-visits-value threshold)
-               (bookmarked-url-p current-url-address))
-          (if-confirm ("Bookmark ~a?" current-url-address)
-                      (bookmark-url :url current-url-address))))))
-
 (define-command delete-bookmark (&optional urls-or-bookmark-entries)
   "Delete bookmark(s) matching URLS-OR-BOOKMARK-ENTRIES.
 URLS is either a list or a single element."
