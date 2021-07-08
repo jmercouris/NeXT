@@ -44,10 +44,10 @@ bookmarks. If this is the case, prompt the user about bookmarking it."
           (if-confirm ("Bookmark ~a?" current-url-address)
                       (bookmark-url :url current-url-address))))))
 
-(defun print-no-nyxt ()
+(defun print-on-nyxt ()
   (echo "HELLO WORLD"))
 
 (defmethod nyxt:on-signal-load-finished ((mode bookmark-frequent-visits-mode) url)
-  (print-no-nyxt)
+  (print-on-nyxt)
   ;(bookmark-frequent-visit)
   url)
