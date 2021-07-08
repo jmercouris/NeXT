@@ -3,7 +3,7 @@
 
 (uiop:define-package :nyxt/bookmark-frequent-visits-mode
     (:use :common-lisp :trivia :nyxt :alexandria)
-  (:documentation "Learn how to create a mode."))
+  (:documentation "Mode to bookmark frequently visited URLs."))
 (in-package :nyxt/bookmark-frequent-visits-mode)
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
@@ -11,7 +11,7 @@
   (trivial-package-local-nicknames:add-package-local-nickname :sera :serapeum))
 
 (define-mode bookmark-frequent-visits-mode ()
-  "Learn how to create a mode."
+  "Mode to allow bookmark of frequently visited URLs while navigating."
   ((constructor
     (lambda (mode)
       (nyxt:on-signal-load-finished mode (url (current-buffer)))))))
@@ -20,13 +20,13 @@
   "Check if current URL is frequently visited and not included in the
 bookmarks. If this is the case, prompt the user about bookmarking it."
   (labels ((bookmarked-url-p (url-address)
-             "The local function bookmarked-url-p returns the URL
-            address itself if it is new to the bookmark list or NIL if it is
-            already there."
+           "The local function bookmarked-url-p returns the URL
+           address itself if it is new to the bookmark list or NIL if it is
+           already there."
              (let ((bookmarks-address-list
-                     (mapcar #'(lambda (e) (render-url (url e)))
-                             (with-data-unsafe (bookmarks (bookmarks-path (current-buffer)))
-                               bookmarks))))
+                    (mapcar #'(lambda (e) (render-url (url e)))
+                              (with-data-unsafe (bookmarks (bookmarks-path (current-buffer)))
+                                 bookmarks))))
                (if (member url-address bookmarks-address-list :test #'string=)
                    nil
                    url-address))))
@@ -51,5 +51,5 @@ bookmarks. If this is the case, prompt the user about bookmarking it."
 
 (defmethod nyxt:on-signal-load-finished ((mode bookmark-frequent-visits-mode) url)
   (print-on-nyxt)
-  ;(bookmark-frequent-visit)
+  (bookmark-frequent-visit)
   url)
