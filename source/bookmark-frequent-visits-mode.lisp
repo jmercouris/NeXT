@@ -7,7 +7,8 @@
 (in-package :nyxt/bookmark-frequent-visits-mode)
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
-  (trivial-package-local-nicknames:add-package-local-nickname :alex :alexandria))
+  (trivial-package-local-nicknames:add-package-local-nickname :alex :alexandria)
+  (trivial-package-local-nicknames:add-package-local-nickname :sera :serapeum))
 
 (define-mode bookmark-frequent-visits-mode ()
   "Learn how to create a mode."
@@ -29,23 +30,24 @@ bookmarks. If this is the case, prompt the user about bookmarking it."
                (if (member url-address bookmarks-address-list :test #'string=)
                    nil
                    url-address))))
-    (let* ((history-entries
+    (sera:and-let*
+        ((history-entries
              (with-data-unsafe (history (history-path (current-buffer)))
                (mapcar #'htree:data (alex:hash-table-keys (htree:entries history)))))
-           (current-url-history
+         (current-url-history
              (find (url (current-buffer)) history-entries :test #'equalp :key #'url))
-           (implicit-visits-value
+         (implicit-visits-value
              (nyxt::implicit-visits current-url-history))
-           (current-url-address
+         (current-url-address
              (render-url (url current-url-history)))
-           (threshold 20))
+         (threshold 20))
       (if (and (> implicit-visits-value threshold)
                (bookmarked-url-p current-url-address))
           (if-confirm ("Bookmark ~a?" current-url-address)
                       (bookmark-url :url current-url-address))))))
 
 (defun print-on-nyxt ()
-  (echo "HELLO WORLD"))
+  (echo "HELLO, WORLD!!"))
 
 (defmethod nyxt:on-signal-load-finished ((mode bookmark-frequent-visits-mode) url)
   (print-on-nyxt)
