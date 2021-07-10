@@ -106,6 +106,7 @@
                #+quicklisp
                (:file "lisp-system")
                ;; Core Modes
+               (:file "bookmark-frequent-visits-mode")
                (:file "editor-mode")
                (:file "plaintext-editor-mode")
                (:file "buffer-listing-mode")
