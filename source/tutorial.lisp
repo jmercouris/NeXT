@@ -123,6 +123,29 @@ full URL including the 'http://' prefix.")
 to quickly find whatever buffer you are looking for.")
     (:li (command-markup 'switch-buffer-next) ": Go to next buffer.")
     (:li (command-markup 'switch-buffer-previous) ": Go to previous buffer."))
+   (:h3 "Copying and Pasting")
+   (:p "Unlike other web browsers, Nyxt provides powerful ways of copying
+   and pasting content via different commands. Starting from:")
+   (:ul
+    (:li (command-markup 'nyxt/web-mode:copy) ": " (command-docstring-first-sentence 'nyxt/web-mode:copy))
+    (:li (command-markup 'nyxt/web-mode:paste) ": " (command-docstring-first-sentence 'nyxt/web-mode:paste)))
+   (:p "Passing through webpage's data:")
+   (:ul
+    (:li (command-markup 'copy-url) ": " (command-docstring-first-sentence 'copy-url))
+    (:li (command-markup 'copy-title) ": " (command-docstring-first-sentence 'copy-title))
+    (:li (command-markup 'nyxt/web-mode:copy-placeholder) ": " (command-docstring-first-sentence 'nyxt/web-mode:copy-placeholder))
+    (:li (command-markup 'nyxt/web-mode:copy-hint-url) ": " (command-docstring-first-sentence 'nyxt/web-mode:copy-hint-url)))
+   (:p "Leveraging password managers: ")
+   #+nil
+   (:ul 
+    (:li (command-markup 'copy-username) ": " (command-docstring-first-sentence 'copy-username))
+    (:li (command-markup 'copy-password) ": " (command-docstring-first-sentence 'copy-password))
+    (:li (command-markup 'copy-password-prompt-details) ": " (command-docstring-first-sentence 'copy-password-prompt-details)))
+   (:p "And more: ")
+   #+nil 
+   (:ul
+    (:li (command-markup 'nyxt/web-mode:paste-from-clipboard-ring) ": " (command-docstring-first-sentence 'nyxt/web-mode:paste-from-clipboard-ring))
+    (:li (command-markup 'copy-system-information) ": " (command-docstring-first-sentence 'copy-system-information)))
    (:h3 "Link navigation")
    (:p "Link-hinting allows you to visit URLs on a page without using the mouse.
 Invoke one of the commands below: several hints will appear on screen and all

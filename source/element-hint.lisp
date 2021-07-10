@@ -367,7 +367,7 @@ visible nosave active buffer."
                :annotate-visible-only-p annotate-visible-only-p))
 
 (define-command copy-hint-url (&key annotate-visible-only-p)
-  "Show a set of element hints, and copy the URL of the user inputted one."
+  "Show a set of element hints, and copy the URL of the user-inputted one."
   (query-hints "Copy element URL" (lambda (result)  (%copy-hint-url (first result)))
                :annotate-visible-only-p annotate-visible-only-p))
 
