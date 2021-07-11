@@ -68,8 +68,7 @@ want to change the behaviour of modifiers, for instance swap 'control' and
                                      :dirname (uiop:xdg-cache-home +data-root+))
                       :documentation "Directory in which the WebKitGTK
 data-manager will store the data separately for each buffer.")
-   (gtk-extensions-path (make-instance 'gtk-extensions-data-path
-                                       :dirname (uiop:xdg-config-home +data-root+ "extensions"))
+   (gtk-extensions-path (make-instance 'gtk-extensions-data-path)
                         :documentation "Directory to store the WebKit-specific extensions in."))
   (:export-class-name-p t)
   (:export-accessor-names-p t)
@@ -197,6 +196,12 @@ not return."
   ;; REVIEW: Should we?
   "We shouldn't enable (possibly) user-identifying extensions for `nosave-data-profile'."
   nil)
+
+(defmethod expand-data-path ((profile data-profile) (path gtk-extensions-data-path))
+  "Return finalized path for gtk-extension directory."
+  (expand-default-path path :root (namestring (if (str:emptyp (namestring (dirname path)))
+                                                  (uiop:xdg-data-home +data-root+ "gtk-extensions")
+                                                  (dirname path)))))
 
 (defun make-web-view (&key context-buffer)
   "Return a web view instance.
