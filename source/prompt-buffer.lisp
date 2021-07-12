@@ -185,26 +185,29 @@ To access the suggestion instead, see `prompter:selected-suggestion'."
 (export-always 'hide-prompt-buffer)
 (defun hide-prompt-buffer (prompt-buffer)
   "Hide PROMPT-BUFFER, display next active one."
-  ;; Note that PROMPT-BUFFER is not necessarily first in the list, e.g. a new
-  ;; prompt-buffer was invoked before the old one reaches here.
-  (alex:deletef (active-prompt-buffers (window prompt-buffer)) prompt-buffer)
-  (when (resumable-p prompt-buffer)
-    (flet ((prompter= (prompter1 prompter2)
-             (and (string= (prompter:prompt prompter1)
-                           (prompter:prompt prompter2))
-                  (string= (prompter:input prompter1)
-                           (prompter:input prompter2)))))
-      ;; Delete a previous, similar prompt, if any.
-      (alex:deletef (old-prompt-buffers *browser*)
-                    prompt-buffer
-                    :test #'prompter=)
-      (push prompt-buffer (old-prompt-buffers *browser*))))
-  (if (active-prompt-buffers (window prompt-buffer))
-      (let ((next-prompt-buffer (first (active-prompt-buffers (window prompt-buffer)))))
-        (show-prompt-buffer next-prompt-buffer))
-      (progn
-        (ffi-window-set-prompt-buffer-height (window prompt-buffer) 0)))
-  (prompter:destroy prompt-buffer))
+  (let ((window (window prompt-buffer)))
+    ;; Note that PROMPT-BUFFER is not necessarily first in the list, e.g. a new
+    ;; prompt-buffer was invoked before the old one reaches here.
+    (alex:deletef (active-prompt-buffers window) prompt-buffer)
+    (if (resumable-p prompt-buffer)
+        (flet ((prompter~ (prompter1 prompter2)
+                 (and (not (eq prompter1 prompter2))
+                      (string= (prompter:prompt prompter1)
+                               (prompter:prompt prompter2))
+                      (string= (prompter:input prompter1)
+                               (prompter:input prompter2)))))
+          ;; Delete a previous, similar prompt, if any.
+          (alex:when-let ((old-prompt (find prompt-buffer (old-prompt-buffers *browser*)
+                                            :test #'prompter~)))
+            (alex:deletef (old-prompt-buffers *browser*)
+                          old-prompt)
+            (ffi-buffer-delete old-prompt))
+          (push prompt-buffer (old-prompt-buffers *browser*)))
+        (ffi-buffer-delete prompt-buffer))
+    (if (active-prompt-buffers window)
+        (let ((next-prompt-buffer (first (active-prompt-buffers window))))
+          (show-prompt-buffer next-prompt-buffer))
+        (ffi-window-set-prompt-buffer-height window 0))))
 
 (defun suggestion-and-mark-count (prompt-buffer suggestions marks
                                   &key multi-selection-p pad-p)
@@ -437,8 +440,8 @@ Example use:
   :sources (list (make-instance 'prompter:source :filter #'my-suggestion-filter)))
 
 See the documentation of `prompt-buffer' to know more about the options."
-    (let ((result-channel (make-channel 1))
-          (interrupt-channel (make-channel 1))
+    (let ((result-channel (make-channel))
+          (interrupt-channel (make-channel))
           (parent-thread-prompt-buffer nil))
       (ffi-within-renderer-thread
        *browser*

@@ -307,7 +307,7 @@ current unmarked selection."
 
 (define-command-prompt cancel-input (prompt-buffer) ; TODO: Rename.
   "Close the prompt-buffer without further action."
-  (hide-prompt-buffer prompt-buffer))
+  (prompter:destroy prompt-buffer))
 
 (define-command-prompt toggle-follow (prompt-buffer)
   "Close the prompt-buffer without further action."

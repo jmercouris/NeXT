@@ -13,7 +13,12 @@
                   :type calispel:channel
                   :export nil
                   :documentation
-                  "Communication channel with the `update' thread."))
+                  "Communication channel with the `update' thread.")
+   (sync-interrupt-channel (make-channel)
+                           :type calispel:channel
+                           :export nil
+                           :documentation
+                           "This channel can be used to stop the queue listening."))
   (:accessor-name-transformer (hu.dwim.defclass-star:make-name-transformer name))
   (:documentation "This object is used to memorize which sources are ready for a
 given input.
@@ -175,6 +180,7 @@ Signal destruction by sending a value to PROMPTER's `interrupt-channel'."
         (sources prompter))
   (maybe-funcall (after-destructor prompter))
   ;; TODO: Interrupt before or after destructor?
+  (calispel:! (sync-interrupt-channel (sync-queue prompter)) t)
   (calispel:! (interrupt-channel prompter) t))
 
 (export-always 'call-follow-mode-function)
@@ -388,7 +394,7 @@ instead."
   (alex:if-let ((selection-values (resolve-selection prompter)))
     (let ((action-result (funcall action selection-values)))
       (calispel:! (result-channel prompter) action-result))
-    (calispel:! (interrupt-channel prompter) t)))
+    (destroy prompter)))
 
 (export-always 'toggle-follow)
 (defun toggle-follow (prompter &optional (source (selected-source prompter)))
@@ -400,28 +406,36 @@ instead."
   "Block and return next PROMPTER ready source.
 It's the next source that's done updating.
 If all sources are done, return t.
-If timeout expires for one source, return nil."
-  ;; We copy `sync-queue' here so that it remains the same object throughout
-  ;; this function, since the slot is subject to be changed concurrently when
-  ;; the input is edited.
-  (alex:if-let ((sync-queue (sync-queue prompter)))
-    (if (= (length (ready-sources sync-queue))
-           (length (sources prompter)))
-        t
-        (multiple-value-bind (next-source ok)
-            (calispel:? (ready-channel sync-queue) timeout)
-          (cond
-            ((not ok)
-             nil)
-            ((null next-source)
-             nil)
-            (t
-             (push next-source (ready-sources sync-queue))
-             ;; Update selection when update is done:
-             (select-first prompter)
-             next-source))))
-    ;; No sync-queue if no input was ever set.
-    t))
+This is unblocked when the PROMPTER is `destroy'ed.
+
+TIMEOUT is deprecated."
+  (declare (ignore timeout)) ; Deprecated.
+  (when prompter
+    ;; We let-bind `sync-queue' here so that it remains the same object throughout
+    ;; this function, since the slot is subject to be changed concurrently when
+    ;; the input is edited.
+    (alex:if-let ((sync-queue (sync-queue prompter)))
+      (if (= (length (ready-sources sync-queue))
+             (length (sources prompter)))
+          t
+          (progn
+            (log:info "LISTEN" prompter (ready-channel sync-queue))
+            (calispel:fair-alt
+              ((calispel:? (ready-channel sync-queue) next-source)
+               (log:info "LISTENED" next-source)
+               (cond
+                 ((null next-source)
+                  nil)
+                 (t
+                  (push next-source (ready-sources sync-queue))
+                  ;; Update selection when update is done:
+                  (select-first prompter)
+                  next-source)))
+              ((calispel:? (sync-interrupt-channel sync-queue))
+               (log:info "LISTENING INTERRUPTED")
+               nil))))
+      ;; No sync-queue if no input was ever set.
+      t)))
 
 (export-always 'all-ready-p)
 (defun all-ready-p (prompter &optional timeout)
