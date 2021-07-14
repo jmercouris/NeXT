@@ -20,6 +20,7 @@ which external dependencies we are directly relying on.
 - cl-ppcre
 - cl-ppcre-unicode
 - cl-prevalence
+- cl-qrencode
 - closer-mop
 - dexador
 - enchant
