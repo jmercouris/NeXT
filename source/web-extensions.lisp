@@ -78,8 +78,6 @@ for a given URL, and nil otherwise")
    (content-scripts nil
                     :type list
                     :documentation "A list of `content-script's used by this extension.")
-   (icons nil
-          :type list)
    (handler-names nil
                   :type list)
    (destructor (lambda (mode)
@@ -91,6 +89,22 @@ for a given URL, and nil otherwise")
                     (hooks:add-hook (buffer-loaded-hook (buffer mode))
                                     (make-activate-content-scripts-handler mode content-script-name))
                     (push content-script-name (handler-names mode)))))))
+
+(defun read-png-as-base64 (png-file)
+  (let ((arr (make-array 0 :element-type '(unsigned-byte 8) :adjustable t :fill-pointer t)))
+    (with-open-file (png png-file :element-type '(unsigned-byte 8))
+      (loop for byte = (read-byte png nil nil)
+            while byte
+            do (vector-push-extend byte arr)
+            finally (return (base64:usb8-array-to-base64-string arr))))))
+
+(defun make-extension-icon (icons-json extension-directory extension-name)
+  (format nil "<img src=\"data:image/png;base64,~a\" alt=\"~a\"
+height=~a/>"
+          (read-png-as-base64
+           (uiop:merge-pathnames* (rest (first icons-json)) extension-directory))
+          extension-name
+          (- (nyxt:height (status-buffer (current-window))) 10)))
 
 (export-always 'load-web-extension)
 (defmacro load-web-extension (lispy-name directory)
@@ -107,8 +121,9 @@ DIRECTORY should be the one containing manifest.json file for the extension in q
           (version ,(alex:assoc-value json :version))
           (description ,(alex:assoc-value json :description))
           (extension-directory ,directory)
+          (nyxt:glyph ,(make-extension-icon (alex:assoc-value json :icons) directory (alex:assoc-value json :name)))
           (homepage-url ,(alex:assoc-value json :homepage--url))
-          (icons (list ,@(mapcar #'rest (alex:assoc-value json :icons))))
+          (browser-action )
           (content-scripts (list ,@(mapcar (lambda (content-script-alist)
                                              (apply #'make-content-script
                                                     (alex:alist-plist content-script-alist)))
