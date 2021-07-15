@@ -18,6 +18,7 @@ This mode is a good candidate to be passed to `make-buffer'."
                      "C-w" 'delete-current-buffer
                      "C-shift-tab" 'switch-buffer-previous
                      "C-tab" 'switch-buffer-next
+                     "C-`" 'switch-buffer-last
                      "C-pageup" 'switch-buffer-previous
                      "C-pagedown" 'switch-buffer-next
                      "C-l" 'set-url
