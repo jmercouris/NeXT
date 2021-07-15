@@ -1020,30 +1020,35 @@ requested a reload."
           (load-webkit-history-entry buffer entry))
         (webkit:webkit-web-view-load-uri (gtk-object buffer) (quri:render-uri url)))))
 
-(defmethod ffi-buffer-evaluate-javascript ((buffer gtk-buffer) javascript)
+(defmethod ffi-buffer-evaluate-javascript ((buffer gtk-buffer) javascript &optional world-name)
   (%within-renderer-thread
    (lambda (&optional channel)
      (webkit2:webkit-web-view-evaluate-javascript
       (gtk-object buffer)
       javascript
       (if channel
-          (lambda (result)
+          (lambda (result jsc-result)
+            (declare (ignore jsc-result))
             (calispel:! channel result))
-          #'identity)
+          (lambda (result jsc-result)
+            (declare (ignore jsc-result))
+            result))
       (lambda (condition)
         (javascript-error-handler condition)
         ;; Notify the listener that we are done.
         (when channel
-          (calispel:! channel nil)))))))
+          (calispel:! channel nil)))
+      world-name))))
 
-(defmethod ffi-buffer-evaluate-javascript-async ((buffer gtk-buffer) javascript)
+(defmethod ffi-buffer-evaluate-javascript-async ((buffer gtk-buffer) javascript &optional world-name)
   (%within-renderer-thread-async
    (lambda ()
      (webkit2:webkit-web-view-evaluate-javascript
       (gtk-object buffer)
       javascript
       nil
-      #'javascript-error-handler))))
+      #'javascript-error-handler
+      world-name))))
 
 (define-ffi-method ffi-buffer-enable-javascript ((buffer gtk-buffer) value)
   (setf (webkit:webkit-settings-enable-javascript

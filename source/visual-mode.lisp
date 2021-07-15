@@ -154,7 +154,7 @@ marquee, multicol, nobr, s, spacer, strike, tt, u, wbr, code, cite, pre"))
 (define-command clear-selection ()
   "Clear the selection and unset the mark."
   (let ((mode (find-submode (current-buffer) 'visual-mode)))
-    (unless (string= (is-collapsed) "true") (collapse-to-focus))
+    (unless (is-collapsed) (collapse-to-focus))
     (setf (mark-set mode) nil)
     (echo "Mark deactivated")))
 

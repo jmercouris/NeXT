@@ -35,24 +35,24 @@
      (when ,initial-contents
        (text-buffer::insert-string ,cursor-name ,initial-contents))
      (when ,initial-cursor-position
-       (setf (cluffer:cursor-position ,cursor-name) (parse-integer ,initial-cursor-position)))
+       (setf (cluffer:cursor-position ,cursor-name) (truncate ,initial-cursor-position)))
      ,@body))
 
 (defmacro with-input-area ((contents cursor-position) &body body)
   `(let* ((,contents (active-input-area-content))
-                  (,cursor-position (active-input-area-cursor)))
+          (,cursor-position (truncate (active-input-area-cursor))))
      ,@body))
 
 (define-command cursor-forwards ()
   "Move cursor forward by one element."
   (let* ((cursor-position (active-input-area-cursor)))
-    (let ((new-position (+ (parse-integer cursor-position) 1)))
+    (let ((new-position (1+ cursor-position)))
       (set-active-input-area-cursor new-position new-position))))
 
 (define-command cursor-backwards ()
   "Move cursor backwards by one element."
-  (let* ((cursor-position (active-input-area-cursor)))
-    (let ((new-position (- (parse-integer cursor-position) 1)))
+  (let* ((cursor-position (truncate (active-input-area-cursor))))
+    (let ((new-position (1- cursor-position)))
       (set-active-input-area-cursor new-position new-position))))
 
 (define-command cursor-forwards-word ()

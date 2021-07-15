@@ -226,7 +226,7 @@ and to index the top of the page.")
            (setf dom-counter 0)
            (count-dom-elements (nyxt/ps:qs document "html"))))
     (let ((value (call-next-method))
-          (element-count (parse-integer (%count-dom-elements) :junk-allowed t)))
+          (element-count (truncate (%count-dom-elements))))
       (if (and value
                ;; Check whether the difference in element count is significant.
                (< (abs (- (length (clss:select "*" value)) element-count))
@@ -578,7 +578,7 @@ Otherwise go forward to the only child."
 (define-command copy-placeholder ()
   "Copy placeholder text to clipboard."
   (let ((current-value (%copy-placeholder)))
-    (if (string-equal current-value "undefined")
+    (if (eq current-value :undefined)
         (echo "No active selected placeholder.")
         (progn (copy-to-clipboard current-value)
                (echo "Placeholder copied.")))))

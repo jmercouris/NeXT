@@ -129,21 +129,20 @@
                      (ps:create "type" "img" "src" (ps:@ element src) "alt" (ps:@ element alt)))))
             (defun collect-selection (elements selection)
               "Collect elements within a selection"
-              (ps:chain |json| (stringify
-                                (loop for element in elements
-                                      when (element-in-selection-p selection element)
-                                      collect (object-create element)))))
+              (loop for element in elements
+                    when (element-in-selection-p selection element)
+                      collect (object-create element)))
             (collect-selection (qsa document (list "a")) selection)))
-    (loop for element in (cl-json:decode-json-from-string (get-selection))
-          collect (str:string-case (alex:assoc-value element :type)
+    (loop for element in (get-selection)
+          collect (str:string-case (gethash "type" element )
                     ("link"
                      (make-instance 'link
-                                    :url (alex:assoc-value element :href)
-                                    :body (plump:text (plump:parse (alex:assoc-value element :body)))))
+                                    :url (gethash "href" element )
+                                    :body (plump:text (plump:parse (gethash "body" element )))))
                     ("img"
                      (make-instance 'image
-                                    :url (alex:assoc-value element :src)
-                                    :alt (alex:assoc-value element :alt)))))))
+                                    :url (gethash "src" element )
+                                    :alt (gethash "alt" element )))))))
 
 (defun frame-element-clear ()
   "Clear the selection frame created by the user."

@@ -667,8 +667,8 @@ sometimes yields the wrong result."
 (define-ffi-generic ffi-buffer-make (browser))
 (define-ffi-generic ffi-buffer-delete (buffer))
 (define-ffi-generic ffi-buffer-load (buffer url))
-(define-ffi-generic ffi-buffer-evaluate-javascript (buffer javascript))
-(define-ffi-generic ffi-buffer-evaluate-javascript-async (buffer javascript))
+(define-ffi-generic ffi-buffer-evaluate-javascript (buffer javascript &optional world-name))
+(define-ffi-generic ffi-buffer-evaluate-javascript-async (buffer javascript &optional world-name))
 (define-ffi-generic ffi-buffer-enable-javascript (buffer value))
 (define-ffi-generic ffi-buffer-enable-javascript-markup (buffer value))
 (define-ffi-generic ffi-buffer-enable-smooth-scrolling (buffer value))
@@ -699,7 +699,7 @@ sometimes yields the wrong result."
       (with-current-buffer buffer
         (let ((slice-size 10000))
           (reduce #'str:concat
-                  (loop for i from 0 to (parse-integer (get-html-length)) by slice-size
+                  (loop for i from 0 to (truncate (get-html-length)) by slice-size
                         collect (get-html i (+ i slice-size)))))))))
 (define-ffi-generic ffi-generate-input-event (window event))
 (define-ffi-generic ffi-generated-input-event-p (window event))

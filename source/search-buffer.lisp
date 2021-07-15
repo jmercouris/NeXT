@@ -105,7 +105,7 @@
     (setf (ps:chain *nodes* identifier) 0)
     (walk-document (ps:chain document body) matches-from-node)
     (replace-original-nodes)
-    (ps:chain |json| (stringify *matches*))))
+    *matches*))
 
 (define-class search-match ()
   ((identifier)
@@ -119,12 +119,11 @@
     ("Buffer ID" ,(id (buffer match)))
     ("Buffer title" ,(title (buffer match)))))
 
-(defun matches-from-json (matches-json &optional (buffer (current-buffer)))
-  (loop for element in (handler-case (cl-json:decode-json-from-string matches-json)
-                         (error () nil))
+(defun matches-from-js (matches-js-array &optional (buffer (current-buffer)))
+  (loop for element in matches-js-array
         collect (make-instance 'search-match
-                               :identifier (cdr (assoc :identifier element))
-                               :body (cdr (assoc :body element))
+                               :identifier (gethash "identifier" element)
+                               :body (gethash "body" element)
                                :buffer buffer)))
 
 (define-command remove-search-hints ()
@@ -151,7 +150,7 @@
           (let ((input (str:replace-all " " " " input))
                 (buffer (buffer source)))
             (with-current-buffer buffer
-              (matches-from-json
+              (matches-from-js
                (query-buffer
                 :query input
                 :case-sensitive-p (case-sensitive-p source))
