@@ -29,58 +29,58 @@
                (analysis::clusters collection)))
            (buffer-markup (buffer)
              "Create the presentation for a buffer."
-             (markup:markup
-              (:p (:a :class "button"
-                      :href (lisp-url `(nyxt::delete-buffer :id ,(id buffer))) "✕")
-                  (:a :class "button"
-                      :href (lisp-url `(nyxt::switch-buffer :id ,(id buffer))) "→")
-                  (:span (title buffer) " - "(render-url (url buffer))))))
+             (spinneret:with-html
+               (:p (:a :class "button"
+                       :href (lisp-url `(nyxt::delete-buffer :id ,(id buffer))) "✕")
+                   (:a :class "button"
+                       :href (lisp-url `(nyxt::switch-buffer :id ,(id buffer))) "→")
+                   (:span (title buffer) " - "(render-url (url buffer))))))
            (cluster-markup (cluster-id cluster)
              "Create the presentation for a cluster."
-             (markup:markup
-              (:div (:h2 (format nil "Cluster ~a" cluster-id))
-                    (loop for document in cluster
-                          collect (buffer-markup (analysis::source document))))))
+             (spinneret:with-html
+               (:div (:h2 (format nil "Cluster ~a" cluster-id))
+                     (loop for document in cluster
+                           collect (buffer-markup (analysis::source document))))))
            (internal-buffers-markup ()
              "Create the presentation for the internal buffers."
-             (markup:markup
-              (:div (:h2 "Internal Buffers")
-                    (loop for buffer in (buffer-list)
-                          when (internal-buffer-p buffer)
-                          collect (buffer-markup buffer))))))
+             (spinneret:with-html
+               (:div (:h2 "Internal Buffers")
+                     (loop for buffer in (buffer-list)
+                           when (internal-buffer-p buffer)
+                           collect (buffer-markup buffer))))))
     (with-current-html-buffer (buffer "*Buffers*" 'nyxt/buffer-listing-mode:buffer-listing-mode)
-      (markup:markup
-       (:style (style buffer))
-       (:h1 "Buffers")
-       (:a :class "button" :href (lisp-url '(nyxt/buffer-listing-mode::list-buffers)) "Update")
-       (:br "")
-       (:div
-        (if cluster
-            (append (list (internal-buffers-markup))
-                    (loop for cluster-key being the hash-key
-                          using (hash-value cluster) of (cluster-buffers)
-                          collect (cluster-markup cluster-key cluster)))
-            (loop for buffer in (buffer-list)
-                  collect (buffer-markup buffer))))))))
+      (spinneret:with-html-string
+        (:style (style buffer))
+        (:h1 "Buffers")
+        (:a :class "button" :href (lisp-url '(nyxt/buffer-listing-mode::list-buffers)) "Update")
+        (:br "")
+        (:div
+         (if cluster
+             (append (list (internal-buffers-markup))
+                     (loop for cluster-key being the hash-key
+                           using (hash-value cluster) of (cluster-buffers)
+                           collect (cluster-markup cluster-key cluster)))
+             (loop for buffer in (buffer-list)
+                   collect (buffer-markup buffer))))))))
 
 (define-command-global show-buffers-panel (&key (side :left))
   "Show the bookmarks in a panel."
   (flet ((buffer-markup (buffer)
            "Create the presentation for a buffer."
-           (markup:markup
-            (:p (:a :class "button"
-                    :href (lisp-url `(nyxt::switch-buffer :id ,(id buffer)))
-                    (:span :title (title buffer) :class "title" (title buffer)))))))
+           (spinneret:with-html
+             (:p (:a :class "button"
+                     :href (lisp-url `(nyxt::switch-buffer :id ,(id buffer)))
+                     (:span :title (title buffer) :class "title" (title buffer)))))))
     (nyxt::with-current-panel (panel-buffer "*Buffers Panel*" :side side)
-      (markup:markup (:style (style panel-buffer))
-                     (:style (cl-css:css
-                              '((".button"
-                                 :white-space "nowrap"
-                                 :overflow-x "hidden"
-                                 :display "block"
-                                 :text-overflow "ellipsis"))))
-                     (:body
-                      (:h1 "Buffers")
-                      (:a :class "button" :href (lisp-url '(nyxt/buffer-listing-mode::show-buffers-panel)) "Update ↺")
-                      (loop for buffer in (buffer-list)
-                            collect (buffer-markup buffer)))))))
+      (spinneret:with-html-string (:style (style panel-buffer))
+                                  (:style (cl-css:css
+                                           '((".button"
+                                              :white-space "nowrap"
+                                              :overflow-x "hidden"
+                                              :display "block"
+                                              :text-overflow "ellipsis"))))
+                                  (:body
+                                   (:h1 "Buffers")
+                                   (:a :class "button" :href (lisp-url '(nyxt/buffer-listing-mode::show-buffers-panel)) "Update ↺")
+                                   (loop for buffer in (buffer-list)
+                                         collect (buffer-markup buffer)))))))

@@ -253,7 +253,7 @@ and to index the top of the page.")
       (string= tag "TEXTAREA")))
 
 (defun call-non-input-command-or-forward (command &key (buffer (current-buffer))
-                                                    (window (current-window)))
+                                                       (window (current-window)))
   (let ((response (%clicked-in-input?)))
     (if (input-tag-p response)
         (ffi-generate-input-event
@@ -474,68 +474,64 @@ Otherwise go forward to the only child."
 (define-command buffer-history-tree (&optional (buffer (current-buffer)))
   "Open a new buffer displaying the whole history tree of a buffer."
   (with-current-html-buffer (output-buffer (format nil "*History-~a*" (id buffer))
-                             'nyxt/history-tree-mode:history-tree-mode)
+                                           'nyxt/history-tree-mode:history-tree-mode)
     (with-data-unsafe (history (history-path buffer))
-      (let* ((markup:*auto-escape* nil)
-             (mode (find-submode output-buffer 'nyxt/history-tree-mode:history-tree-mode))
-             (tree `(:ul ,(htree:map-owned-tree
-                           #'(lambda (node)
-                               `(:li
-                                 (:a :href ,(render-url (url (htree:data node)))
-                                     ,(let ((title (title-or-fallback (htree:data node))))
-                                        (if (eq node (htree:current-owner-node history))
-                                            `(:b ,title)
-                                            title)))))
-                           history
-                           :include-root t
-                           :collect-function #'(lambda (a b) `(,@a ,(when b `(:ul ,@b))))))))
-        (markup:markup
-         (:body (:h1 "History")
-                (:style (style output-buffer))
-                (:style (style mode))
-                (:div (markup:raw
-                       (markup:markup*
-                        tree)))))))))
+      (let* ((mode (find-submode output-buffer 'nyxt/history-tree-mode:history-tree-mode))
+             (tree (eval `(spinneret:with-html-string
+                            (:ul ,(htree:map-owned-tree
+                                   #'(lambda (node)
+                                       `(:li
+                                         (:a :href ,(render-url (url (htree:data node)))
+                                             ,(let ((title (title-or-fallback (htree:data node))))
+                                                (if (eq node (htree:current-owner-node history))
+                                                    `(:b ,title)
+                                                    title)))))
+                                   history
+                                   :include-root t
+                                   :collect-function #'(lambda (a b) `(,@a ,(when b `(:ul ,@b))))))))))
+        (spinneret:with-html-string
+          (:body (:h1 "History")
+                 (:style (style output-buffer))
+                 (:style (style mode))
+                 (:div (:raw tree))))))))
 
 (define-command history-tree ()         ; TODO: Factor this with `buffer-history-tree'.
   "Open a new buffer displaying the whole history branch the current buffer is on."
   (nyxt::with-current-html-buffer (output-buffer "*History*"
                                                  'nyxt/history-tree-mode:history-tree-mode)
     (with-data-unsafe (history (history-path (current-buffer)))
-      (let ((markup:*auto-escape* nil)
-            (mode (find-submode output-buffer 'nyxt/history-tree-mode:history-tree-mode))
-            (tree `(:ul ,(htree:map-tree
-                          #'(lambda (node)
-                              `(:li (:a :href ,(render-url (url (htree:data node)))
-                                        ,(let ((title (title-or-fallback (htree:data node))))
-                                           (cond
-                                             ((eq node (htree:current-owner-node history))
-                                              `(:i (:b ,title)))
-                                             ((htree:owned-p (htree:current-owner history) node)
-                                              `(:b ,title))
-                                             (t title)))))) ; Color?  Smaller?
-                          history
-                          :include-root t
-                          :collect-function #'(lambda (a b) `(,@a ,(when b `(:ul ,@b))))))))
-        (markup:markup
-         (:body (:h1 "History")
-                (:style (style output-buffer))
-                (:style (style mode))
-                (:div (markup:raw
-                       (markup:markup*
-                        tree)))))))))
+      (let ((mode (find-submode output-buffer 'nyxt/history-tree-mode:history-tree-mode))
+            (tree (eval `(spinneret:with-html-string
+                           (:ul ,(htree:map-tree
+                                  #'(lambda (node)
+                                      `(:li (:a :href ,(render-url (url (htree:data node)))
+                                                ,(let ((title (title-or-fallback (htree:data node))))
+                                                   (cond
+                                                     ((eq node (htree:current-owner-node history))
+                                                      `(:i (:b ,title)))
+                                                     ((htree:owned-p (htree:current-owner history) node)
+                                                      `(:b ,title))
+                                                     (t title)))))) ; Color?  Smaller?
+                                  history
+                                  :include-root t
+                                  :collect-function #'(lambda (a b) `(,@a ,(when b `(:ul ,@b))))))))))
+        (spinneret:with-html-string
+          (:body (:h1 "History")
+                 (:style (style output-buffer))
+                 (:style (style mode))
+                 (:div (:raw tree))))))))
 
 (define-command list-history (&key (limit 100))
   "Print the user history as a list."
   (with-current-html-buffer (buffer "*History list*" 'nyxt/list-history-mode:list-history-mode)
-    (markup:markup
-     (:style (style buffer))
-     (:style (style (find-submode buffer 'nyxt/list-history-mode:list-history-mode)))
-     (:h1 "History")
-     (:ul (nyxt::history-html-list :limit limit)))))
+    (spinneret:with-html-string
+      (:style (style buffer))
+      (:style (style (find-submode buffer 'nyxt/list-history-mode:list-history-mode)))
+      (:h1 "History")
+      (:ul (:raw (nyxt::history-html-list :limit limit))))))
 
 (define-command paste ()
-  "Paste from clipboard into active-element."
+  "Paste from clipboard into active element."
   ;; On some systems like Xorg, clipboard pasting happens just-in-time.  So if we
   ;; copy something from the context menu 'Copy' action, upon pasting we will
   ;; retrieve the text from the GTK thread.  This is prone to create

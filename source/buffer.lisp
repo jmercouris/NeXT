@@ -977,14 +977,13 @@ set of useful URLs or preparing a list to send to a someone else."
                                           :actions '()
                                           :multi-selection-p t))))
     (with-current-html-buffer (reduced-buffer "*Reduced Buffers*" 'base-mode)
-      (markup:markup
-       (:style (style reduced-buffer))
-       (:h1 "Reduced Buffers:")
-       (:div
-        (loop for buffer in buffers
-              collect
-                 (with-current-buffer buffer
-                   (markup:markup
+      (spinneret:with-html-string
+        (:style (style reduced-buffer))
+        (:h1 "Reduced Buffers:")
+        (:div
+         (loop for buffer in buffers
+               collect
+                  (with-current-buffer buffer
                     (:div
                      (:p (:b "Title: ") (title buffer))
                      (:p (:b "URL: ") (:a :href (render-url (url buffer))
@@ -993,8 +992,8 @@ set of useful URLs or preparing a list to send to a someone else."
                          (:ul
                           (loop for summary-bullet in (analysis:summarize-text
                                                        (document-get-paragraph-contents :limit 10000))
-                                collect (markup:markup (:li (str:collapse-whitespaces summary-bullet))))))
-                     (:hr ""))))))))
+                                collect (:li (str:collapse-whitespaces summary-bullet)))))
+                     (:hr "")))))))
     (when delete (mapcar #'buffer-delete buffers))))
 
 (define-command delete-all-buffers (&key (confirmation-p t))

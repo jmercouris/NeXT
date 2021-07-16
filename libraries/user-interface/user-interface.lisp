@@ -17,8 +17,8 @@
   (setf (id element) (unique-id)))
 
 (defmethod object-string ((element ui-element))
-  (cl-markup:markup*
-   (object-expression element)))
+  (eval `(spinneret:with-html-string
+           ,(object-expression element))))
 
 (defmethod connect ((element ui-element) buffer)
   (setf (buffer element) buffer))

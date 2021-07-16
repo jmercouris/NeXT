@@ -40,14 +40,8 @@ the highest standard on accessibility.")
                                              :insert-class "nyxt-diff-insert"
                                              :delete-class "nyxt-diff-delete"
                                              :replace-class "nyxt-diff-replace"))
-                  (nyxt::html-set
-                   (str:concat (markup:markup (:style (diff-style instance)))
-                               (diff-html instance))
-                   (buffer instance))
-                  ;; setting the title the following way doesn't work
-                  ;; (setf (title (buffer instance)) "*diff*")
-                  ;; (set-window-title)
-                  ;; a temporary fix below
+                  (nyxt::html-set (diff-html instance) (buffer instance))
+                  (nyxt::html-set-style (diff-style instance) (buffer instance))
                   (ffi-buffer-evaluate-javascript
                    (buffer instance)
                    (ps:ps (setf (ps:chain document title) "*diff*")))))))

@@ -21,30 +21,29 @@ represents a command.")))
 (define-command-global edit-macro ()
   "Edit a macro."
   (with-current-html-buffer (buffer "*Macro edit*" 'nyxt/macro-edit-mode:macro-edit-mode)
-    (markup:markup
-     (:style (style buffer))
-     (:h1 "Macro edit")
-     (:p "Name")
-     (:input :type "text" :id "macro-name")
-     (:p "Commands")
-     (:p (:a :class "button"
-             :href (lisp-url '(nyxt/macro-edit-mode::add-command)) "+ Add command"))
-     (:div :id "commands" "")
-     (:br)
-     (:hr)
-     (:a :class "button"
-         :href (lisp-url '(nyxt/macro-edit-mode::save-macro)) "Save macro")
-     (:a :class "button"
-         :href (lisp-url '(nyxt/macro-edit-mode::evaluate-macro)) "Evaluate macro"))))
+    (spinneret:with-html-string
+      (:style (style buffer))
+      (:h1 "Macro edit")
+      (:p "Name")
+      (:input :type "text" :id "macro-name")
+      (:p "Commands")
+      (:p (:a :class "button"
+              :href (lisp-url '(nyxt/macro-edit-mode::add-command)) "+ Add command"))
+      (:div :id "commands" "")
+      (:br)
+      (:hr)
+      (:a :class "button"
+          :href (lisp-url '(nyxt/macro-edit-mode::save-macro)) "Save macro")
+      (:a :class "button"
+          :href (lisp-url '(nyxt/macro-edit-mode::evaluate-macro)) "Evaluate macro"))))
 
 (defmethod render-functions ((macro-editor macro-edit-mode))
   (flet ((render-functions ()
-           (markup:markup
-            (:table
-             (loop for key being the hash-keys of (functions macro-editor)
-                   using (hash-value value)
-                   collect (markup:markup
-                            (:tr (:td (:a :class "button"
+           (spinneret:with-html-string
+             (:table
+              (loop for key being the hash-keys of (functions macro-editor)
+                    using (hash-value value)
+                    collect (:tr (:td (:a :class "button"
                                           :href (lisp-url `(nyxt/macro-edit-mode::remove-function
                                                             (current-mode 'macro-edit-mode)
                                                             ,key))
@@ -54,7 +53,7 @@ represents a command.")))
                                                             (current-mode 'macro-edit-mode)
                                                             ,key))
                                           "🛈"))
-                                 (:td (symbol-name (name value))))))))))
+                                 (:td (symbol-name (name value)))))))))
     (ffi-buffer-evaluate-javascript-async
      (buffer macro-editor)
      (ps:ps
@@ -79,7 +78,7 @@ represents a command.")))
   (let ((name (ffi-buffer-evaluate-javascript
                (buffer macro-editor)
                (ps:ps
-                (ps:chain document (get-element-by-id "macro-name") value)))))
+                 (ps:chain document (get-element-by-id "macro-name") value)))))
     (cond ((not (str:emptyp name)) (setf (slot-value macro-editor 'name) name))
           ((slot-value macro-editor 'name) (slot-value macro-editor 'name))
           (t nil))))
@@ -96,7 +95,7 @@ represents a command.")))
   (let ((command 
           (first
            (prompt
-            :prompt "Describe command"
+            :prompt "Add command"
             :sources (make-instance 'user-command-source)))))
     (add-function macro-editor command)))
 

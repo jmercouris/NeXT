@@ -25,10 +25,10 @@
       (initialize-display mode)))))
 
 (defmethod initialize-display ((editor plaintext-editor-mode))
-  (let* ((content (markup:markup
-                   (:head (:style (style editor)))
-                   (:body
-                    (:textarea :id "editor" :name "editor" :autofocus t))))
+  (let* ((content (spinneret:with-html-string
+                    (:head (:style (style editor)))
+                    (:body
+                     (:textarea :id "editor" :name "editor" :autofocus t))))
          (insert-content (ps:ps (ps:chain document (write (ps:lisp content))))))
     (ffi-buffer-evaluate-javascript-async (buffer editor) insert-content)))
 

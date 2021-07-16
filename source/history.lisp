@@ -177,18 +177,17 @@ lot."
                                 (score-history-entry y))))))))
           owner-less-history-entries))))))
 
-(defun history-html-list (&key (limit 100) ; Export?
-                            (separator " → "))
+(defun history-html-list (&key (limit 100) (separator " → "))
   (with-data-unsafe (history (history-path (current-buffer)))
     (let* ((history-entries
              (sort-by-time (alex:hash-table-keys (htree:entries history))
                            :key #'htree:last-access)))
-      (loop for entry in (sera:take limit (the list history-entries))
-            for data = (htree:data entry)
-            collect (markup:markup
-                     (:li (title data) (unless (str:emptyp (title data)) separator)
-                          (:a :href (render-url (url data))
-                              (render-url (url data)))))))))
+      (spinneret:with-html-string
+        (loop for entry in (sera:take limit (the list history-entries))
+              for data = (htree:data entry)
+              collect (:li (title data) (unless (str:emptyp (title data)) separator)
+                           (:a :href (render-url (url data))
+                               (render-url (url data)))))))))
 
 (defun history-stored-data (path)
   "Return the history data that needs to be serialized.

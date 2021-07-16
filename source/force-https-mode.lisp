@@ -15,7 +15,7 @@
 help on how to proceed."
   (setf (slot-value buffer 'nyxt::load-status) :failed)
   (nyxt::html-set
-   (markup:markup
+   (spinneret:with-html-string
     (:h1 (format nil "HTTPS → HTTP loop: ~a" (render-url url)))
     (:p "The HTTPS address you are trying to visit redirects to HTTP while the "
         (:code "force-https-mode") " is on.")

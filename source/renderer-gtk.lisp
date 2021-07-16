@@ -962,7 +962,7 @@ See `gtk-browser's `modifier-translator' slot."
       (echo "Failed to load URL ~a in buffer ~a." failing-url (id buffer))
       (setf (slot-value buffer 'load-status) :failed)
       (html-set
-       (markup:markup
+       (spinneret:with-html-string
         (:h1 "Page could not be loaded.")
         (:h2 "URL: " failing-url)
         (:ul
@@ -1193,9 +1193,9 @@ custom (the specified proxy) and none."
    (webkit:webkit-web-view-get-inspector (gtk-object buffer))))
 
 (define-ffi-method ffi-print-status ((window gtk-window) text)
-  (let ((text (markup:markup
+  (let ((text (spinneret:with-html-string
                (:head (:style (style (status-buffer window))))
-               (:body (markup:raw text)))))
+               (:body (:raw text)))))
     (with-slots (status-buffer) window
       (webkit2:webkit-web-view-evaluate-javascript
        (gtk-object (status-buffer window))
@@ -1203,9 +1203,9 @@ custom (the specified proxy) and none."
                     (ps:lisp text)))))))
 
 (define-ffi-method ffi-print-message ((window gtk-window) text)
-  (let ((text (markup:markup
+  (let ((text (spinneret:with-html-string
                (:head (:style (message-buffer-style window)))
-               (:body (markup:raw text)))))
+               (:body (:raw text)))))
     (with-slots (message-view) window
       (webkit2:webkit-web-view-evaluate-javascript
        (message-view window)

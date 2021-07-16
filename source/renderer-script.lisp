@@ -85,7 +85,7 @@ If `setf'-d to a list of two values -- set Y to `first' and X to `second' elemen
                 (ps:lisp content)))))
 
 (defun html-set-style (style-string &optional (buffer (current-buffer)))
-  (let ((style (markup:markup (:style style-string))))
+  (let ((style (spinneret:with-html-string (:style style-string))))
     (ffi-buffer-evaluate-javascript-async
      buffer
      (ps:ps (ps:chain document body

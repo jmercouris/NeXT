@@ -49,34 +49,31 @@
 
 (defun value->html (value &key (help-mode (current-mode 'help)))
   "Return the HTML representation of VALUE."
-  (cond
-    ((consp value)
-     (markup:markup
-      (:ul
-       (loop for e in value
-             for i below (length value)
-             collect (markup:markup
-                      (:li (:a :href (lisp-url `(describe-value
+  (spinneret:with-html-string
+    (cond
+      ((consp value)
+       (:ul
+        (loop for e in value
+              for i below (length value)
+              collect (:li (:a :href (lisp-url `(describe-value
                                                  (nth ,i ,(nyxt/help-mode:inspected-value help-mode))))
-                               e)))))))
-    ((has-attributes-method-p value)
-     (markup:markup
-      (:ul
-       (loop for (attribute-key attribute-value) in (prompter:object-attributes value)
-             collect (markup:markup
-                      (:li attribute-key ": " (:code attribute-value)))))))
-    (t
-     (princ-to-string value))))
+                               e)))))
+      ((has-attributes-method-p value)
+       (:ul
+        (loop for (attribute-key attribute-value) in (prompter:object-attributes value)
+              collect (:li attribute-key ": " (:code attribute-value)))))
+      (t
+       (:raw (princ-to-string value))))))
 
 (defun describe-value (value)
   "Inspect VALUE and show it in a help buffer."
   (with-current-html-buffer (buffer "*Help-value*" 'nyxt/help-mode:help-mode)
     (let ((help-mode (find-mode buffer 'help-mode)))
       (setf (nyxt/help-mode:inspected-value help-mode) value)
-      (markup:markup
+      (spinneret:with-html-string
        (:style (style buffer))
        (:h1 (princ-to-string value))
-       (:p (markup:raw (value->html value :help-mode help-mode)))))))
+       (:p (:raw (value->html value :help-mode help-mode)))))))
 
 (defun has-attributes-method-p (object)
   "Return non-nil if OBJECT has `prompter:object-attributes' specialization."
@@ -91,12 +88,12 @@
                                    'nyxt/help-mode:help-mode)
           (let ((help-mode (find-mode buffer 'help-mode)))
             (setf (nyxt/help-mode:inspected-value help-mode) input)
-            (markup:markup
-             (:style (style buffer))
-             (:h1 (format nil "~s" input)) ; Use FORMAT to keep package prefix.
-             (:pre (documentation input 'variable))
-             (:h2 "Current Value:")
-             (:p (markup:raw (value->html (symbol-value input) :help-mode help-mode)))))))
+            (spinneret:with-html-string
+              (:style (style buffer))
+              (:h1 (format nil "~s" input)) ; Use FORMAT to keep package prefix.
+              (:pre (documentation input 'variable))
+              (:h2 "Current Value:")
+              (:p (:raw (value->html (symbol-value input) :help-mode help-mode)))))))
       (prompt
        :prompt "Describe variable:"
        :sources (make-instance 'variable-source))))
@@ -107,11 +104,11 @@ For generic functions, describe all the methods."
   (if function-suggestion
       (let ((input function-suggestion))
         (flet ((method-desc (method)
-                 (markup:markup
-                  (:h1 (symbol-name input) " " (write-to-string (mopu:method-specializers method)))
-                  (:pre (documentation method 't))
-                  (:h2 "Argument list")
-                  (:p (write-to-string (closer-mop:method-lambda-list method))))))
+                 (spinneret:with-html-string
+                   (:h1 (symbol-name input) " " (write-to-string (mopu:method-specializers method)))
+                   (:pre (documentation method 't))
+                   (:h2 "Argument list")
+                   (:p (write-to-string (closer-mop:method-lambda-list method))))))
           (with-current-html-buffer (buffer
                                      (str:concat "*Help-" (symbol-name input) "*")
                                      'nyxt/help-mode:help-mode)
@@ -120,18 +117,18 @@ For generic functions, describe all the methods."
                                             (mopu:generic-function-methods
                                              (symbol-function input))))
                 (str:concat
-                 (markup:markup
-                  (:style (style buffer))
-                  (:h1 (format nil "~s" input) ; Use FORMAT to keep package prefix.
-                       (when (macro-function input) " (macro)"))
-                  (:pre (documentation input 'function))
-                  (:h2 "Argument list")
-                  (:p (write-to-string (mopu:function-arglist input))))
+                 (spinneret:with-html-string
+                   (:style (style buffer))
+                   (:h1 (format nil "~s" input) ; Use FORMAT to keep package prefix.
+                        (when (macro-function input) " (macro)"))
+                   (:pre (documentation input 'function))
+                   (:h2 "Argument list")
+                   (:p (write-to-string (mopu:function-arglist input))))
                  #+sbcl
                  (unless (macro-function input)
-                   (markup:markup
-                    (:h2 "Type")
-                    (:p (format nil "~s" (sb-introspect:function-type input))))))))))
+                   (spinneret:with-html-string
+                     (:h2 "Type")
+                     (:p (format nil "~s" (sb-introspect:function-type input))))))))))
       (prompt
        :prompt "Describe function"
        :sources (make-instance 'function-source))))
@@ -155,25 +152,25 @@ A command is a special kind of function that can be called with
                  (alex:when-let ((location (getf (swank:find-definition-for-thing (fn command))
                                                  :location)))
                    (alex:last-elt location))))
-          (markup:markup
-           (:style (style buffer))
-           (:h1 (symbol-name (name command))
-                (unless (eq (find-package :nyxt)
-                            (symbol-package (name command)))
-                  (format nil " (~a)"
-                          (package-name (symbol-package (name command))))))
-           (:p (:pre
-                ;; TODO: This only displays the first method,
-                ;; i.e. the first command of one of the modes.
-                ;; Ask for modes instead?
-                (documentation (fn command) t)))
-           (:h2 "Bindings")
-           (:p (format nil "~:{ ~S (~a)~:^, ~}" key-keymapname-pairs))
-           (:h2 (format nil "Source~a: " (if source-file
-                                             (format nil " (~a)" source-file)
-                                             "")))
-           (:pre (:code (let ((*print-case* :downcase))
-                          (write-to-string (sexp command))))))))
+          (spinneret:with-html-string
+            (:style (style buffer))
+            (:h1 (symbol-name (name command))
+                 (unless (eq (find-package :nyxt)
+                             (symbol-package (name command)))
+                   (format nil " (~a)"
+                           (package-name (symbol-package (name command))))))
+            (:p (:pre
+                 ;; TODO: This only displays the first method,
+                 ;; i.e. the first command of one of the modes.
+                 ;; Ask for modes instead?
+                 (documentation (fn command) t)))
+            (:h2 "Bindings")
+            (:p (format nil "~:{ ~S (~a)~:^, ~}" key-keymapname-pairs))
+            (:h2 (format nil "Source~a: " (if source-file
+                                              (format nil " (~a)" source-file)
+                                              "")))
+            (:pre (:code (let ((*print-case* :downcase))
+                           (write-to-string (sexp command))))))))
       (prompt
        :prompt "Describe command"
        :sources (make-instance 'user-command-source
@@ -186,7 +183,7 @@ A command is a special kind of function that can be called with
         (with-current-html-buffer (buffer
                                    (str:concat "*Help-" (symbol-name (name input)) "*")
                                    'nyxt/help-mode:help-mode)
-          (str:concat (markup:markup (:style (style buffer)))
+          (str:concat (spinneret:with-html-string (:style (style buffer)))
                       (describe-slot* (name input) (class-sym input)
                                       :mention-class-p t))))
       (prompt
@@ -198,29 +195,28 @@ A command is a special kind of function that can be called with
   ;; TODO: Adapt HTML sections / lists to describe-slot and describe-class.
   ;; TODO: Parse docstrings and highlight code samples.
   (let ((props (mopu:slot-properties (find-class class) slot)))
-    (markup:markup
-     (:ul
-      (:li slot)
+    (spinneret:with-html-string
       (:ul
-       (when mention-class-p
-         (list (markup:markup (:li (format nil "Class: ~s" class)))))
-       (when (getf props :type)
-         (list (markup:markup (:li (format nil "Type: ~s" (getf props :type))))))
-       (when (getf props :initform)
-         (let* ((initform-string (let ((*print-case* :downcase))
-                                   (write-to-string (getf props :initform))))
-                (multiline-form? (search +newline+ initform-string)))
-           (if multiline-form?
-               (list (markup:markup (:li "Default value: " (:pre (:code initform-string)))))
-               (list (markup:markup (:li "Default value: " (:code initform-string)))))))
-       (when (getf props :documentation)
-         ;; We use :pre for documentation so that code samples get formatted properly.
-         (list (markup:markup (:li "Documentation: " (:pre (getf props :documentation))))))
-       (unless (user-class-p class)
-         (list (markup:markup
-                (:li (:a :class "button"
-                         :href (lisp-url `(nyxt::configure-slot ',slot ',class :type ',(getf props :type)))
-                         "Configure"))))))))))
+       (:li slot)
+       (:ul
+        (when mention-class-p
+          (:li (format nil "Class: ~s" class)))
+        (when (getf props :type)
+          (:li (format nil "Type: ~s" (getf props :type))))
+        (when (getf props :initform)
+          (let* ((initform-string (let ((*print-case* :downcase))
+                                    (write-to-string (getf props :initform))))
+                 (multiline-form? (search +newline+ initform-string)))
+            (if multiline-form?
+                (:li "Default value: " (:pre (:code initform-string)))
+                (:li "Default value: " (:code initform-string)))))
+        (when (getf props :documentation)
+          ;; We use :pre for documentation so that code samples get formatted properly.
+          (:li "Documentation: " (:pre (getf props :documentation))))
+        (unless (user-class-p class)
+          (:li (:a :class "button"
+                   :href (lisp-url `(nyxt::configure-slot ',slot ',class :type ',(getf props :type)))
+                   "Configure"))))))))
 
 (define-command describe-class (&optional class-suggestion)
   "Inspect a class and show it in a help buffer."
@@ -231,28 +227,20 @@ A command is a special kind of function that can be called with
                                    'nyxt/help-mode:help-mode)
           (let* ((slots (class-public-slots input))
                  (slot-descs (apply #'str:concat (mapcar (alex:rcurry #'describe-slot* input) slots))))
-            (macrolet ((class-link (class-name)
-                         `(markup:markup
-                           (:li (:a :href (lisp-url `(nyxt::describe-class ',class-name))
-                                    ,class-name)))))
-              (str:concat
-               (markup:markup
-                (:style (style buffer))
-                (:h1 (symbol-name input))
-                (:p (:pre (documentation input 'type))))
-               (when (mopu:direct-superclasses input)
-                 (markup:markup
-                  (:h2 "Direct superclasses:")
-                  (:ul (loop for class-name in (mapcar #'class-name (mopu:direct-superclasses input))
-                             collect (class-link class-name)))))
-               (when (mopu:direct-subclasses input)
-                 (markup:markup
-                  (:h2 "Direct subclasses:")
-                  (:ul (loop for class-name in (mapcar #'class-name (mopu:direct-subclasses input))
-                             collect (class-link class-name)))))
-               (markup:markup
-                (:h2 "Slots:"))
-               slot-descs)))))
+            (spinneret:with-html-string
+              (:style (style buffer))
+              (:h1 (symbol-name input))
+              (:p (:pre (documentation input 'type)))
+              (when (mopu:direct-superclasses input)
+                (:h2 "Direct superclasses:")
+                (:ul (loop for class-name in (mapcar #'class-name (mopu:direct-superclasses input))
+                           collect (:li (:a :href (lisp-url `(nyxt::describe-class ',class-name)) class-name)))))
+              (when (mopu:direct-subclasses input)
+                (:h2 "Direct subclasses:")
+                (:ul (loop for class-name in (mapcar #'class-name (mopu:direct-subclasses input))
+                           collect (:li (:a :href (lisp-url `(nyxt::describe-class ',class-name)) class-name)))))
+              (:h2 "Slots:")
+              (:raw slot-descs)))))
       (prompt
        :prompt "Describe class"
        :sources (make-instance 'class-source))))
@@ -264,25 +252,24 @@ A command is a special kind of function that can be called with
                              'nyxt/help-mode:help-mode)
     (let* ((modes (modes prompt-buffer))
            (sources (prompter:sources prompt-buffer)))
-      (str:concat
-       (markup:markup
-        (:style (style buffer))
-        (:h1 (prompter:prompt prompt-buffer))
-        (:p (:pre (documentation prompt-buffer 'type)))
-        (:h2 "Modes:")
-        (:ul
-         (loop for mode in modes
-               collect (markup:markup (:li (:a :href
-                                               (lisp-url
-                                                `(describe-class ',(sera:class-name-of mode)))
-                                               (string (sera:class-name-of mode)))))))
-        (:h2 "Sources:")
-        (:ul
-         (loop for source in sources
-               collect (markup:markup (:li (:a :href
-                                               (lisp-url
-                                                `(describe-class ',(sera:class-name-of source)))
-                                               (string (sera:class-name-of source))))))))))))
+      (spinneret:with-html-string
+       (:style (style buffer))
+       (:h1 (prompter:prompt prompt-buffer))
+       (:p (:pre (documentation prompt-buffer 'type)))
+       (:h2 "Modes:")
+       (:ul
+        (loop for mode in modes
+              collect (:li (:a :href
+                               (lisp-url
+                                `(describe-class ',(sera:class-name-of mode)))
+                               (string (sera:class-name-of mode))))))
+       (:h2 "Sources:")
+       (:ul
+        (loop for source in sources
+              collect (:li (:a :href
+                               (lisp-url
+                                `(describe-class ',(sera:class-name-of source)))
+                               (string (sera:class-name-of source))))))))))
 
 (defun configure-slot (slot class &key
                                     (value nil new-value-supplied-p)
@@ -329,79 +316,79 @@ CLASS is a class symbol."
 (define-command common-settings ()
   "Configure a set of frequently used settings."
   (with-current-html-buffer (buffer "*Settings*" 'nyxt/help-mode:help-mode)
-    (markup:markup
-     (:style (style buffer))
-     (:h1 "Common Settings")
-     (:p "Set the values for frequently configured settings. "
-         "Changes only apply to newly created buffers.")
-     (:h2 "Keybinding style")
-     (:p (:a :class "button"
-             :href (lisp-url `(nyxt::configure-slot
-                               'default-modes 'buffer
-                               :value '%slot-default%)
-                             `(nyxt/emacs-mode:emacs-mode :activate nil)
-                             `(nyxt/vi-mode:vi-normal-mode :activate nil))
-             "Use default (CUA)"))
-     (:p (:a :class "button"
-             :href (lisp-url `(nyxt::configure-slot
-                               'default-modes 'buffer
-                               :value '(append '(emacs-mode) %slot-default%))
-                             `(nyxt/emacs-mode:emacs-mode :activate t)
-                             `(nyxt/vi-mode:vi-normal-mode :activate nil))
-             "Use Emacs"))
-     (:p (:a :class "button"
-             :href (lisp-url `(progn
-                                (nyxt::configure-slot
-                                 'default-modes 'buffer
-                                 :value '(append '(vi-normal-mode) %slot-default%))
-                                (nyxt::configure-slot
-                                 'default-modes
-                                 'prompt-buffer
-                                 :value '(append '(vi-insert-mode) %slot-default%)))
-                             `(nyxt/vi-mode:vi-normal-mode :activate t)
-                             `(nyxt/emacs-mode:emacs-mode :activate nil))
-             "Use vi"))
-     (:h2 "Default new buffer URL")
-     (:a :class "button"
-         :href (lisp-url `(nyxt::configure-slot 'default-new-buffer-url 'web-buffer :type 'STRING))
-         "Set default new buffer URL")
-     (:h2 "Default zoom ratio")
-     (:a :class "button"
-         :href (lisp-url `(nyxt::configure-slot 'current-zoom-ratio 'buffer))
-         "Set default zoom ratio")
-     (:h2 "Disable compositing")
-     (:p "On some systems, compositing can cause issues with rendering. If you
+    (let ((spinneret:*html-style* :tree))
+      (spinneret:with-html-string
+        (:style (style buffer))
+        (:h1 "Common Settings")
+        (:p "Set the values for frequently configured settings. "
+            "Changes only apply to newly created buffers.")
+        (:h2 "Keybinding style")
+        (:p (:a :class "button"
+                :href (lisp-url `(nyxt::configure-slot
+                                  'default-modes 'buffer
+                                  :value '%slot-default%)
+                                `(nyxt/emacs-mode:emacs-mode :activate nil)
+                                `(nyxt/vi-mode:vi-normal-mode :activate nil))
+                "Use default (CUA)"))
+        (:p (:a :class "button"
+                :href (lisp-url `(nyxt::configure-slot
+                                  'default-modes 'buffer
+                                  :value '(append '(emacs-mode) %slot-default%))
+                                `(nyxt/emacs-mode:emacs-mode :activate t)
+                                `(nyxt/vi-mode:vi-normal-mode :activate nil))
+                "Use Emacs"))
+        (:p (:a :class "button"
+                :href (lisp-url `(progn
+                                   (nyxt::configure-slot
+                                    'default-modes 'buffer
+                                    :value '(append '(vi-normal-mode) %slot-default%))
+                                   (nyxt::configure-slot
+                                    'default-modes
+                                    'prompt-buffer
+                                    :value '(append '(vi-insert-mode) %slot-default%)))
+                                `(nyxt/vi-mode:vi-normal-mode :activate t)
+                                `(nyxt/emacs-mode:emacs-mode :activate nil))
+                "Use vi"))
+        (:h2 "Default new buffer URL")
+        (:a :class "button"
+            :href (lisp-url `(nyxt::configure-slot 'default-new-buffer-url 'web-buffer :type 'STRING))
+            "Set default new buffer URL")
+        (:h2 "Default zoom ratio")
+        (:a :class "button"
+            :href (lisp-url `(nyxt::configure-slot 'current-zoom-ratio 'buffer))
+            "Set default zoom ratio")
+        (:h2 "Disable compositing")
+        (:p "On some systems, compositing can cause issues with rendering. If you
      are experiencing blank web-views, you can try to disable compositing. After
      disabling compositing, you will need to restart Nyxt.")
-     (:a :class "button"
-         :href (lisp-url `(nyxt::append-configuration
-                           '(setf (uiop:getenv "WEBKIT_DISABLE_COMPOSITING_MODE") "1")))
-         "Disable compositing"))))
+        (:a :class "button"
+            :href (lisp-url `(nyxt::append-configuration
+                              '(setf (uiop:getenv "WEBKIT_DISABLE_COMPOSITING_MODE") "1")))
+            "Disable compositing")))))
 
 (define-command describe-bindings ()
   "Show a buffer with the list of all known bindings for the current buffer."
   (with-current-html-buffer (buffer "*Help-bindings" 'nyxt/help-mode:help-mode)
-    (markup:markup
-     (:style (style buffer))
-     (:h1 "Bindings")
-     (:p
-      (loop for keymap in (current-keymaps (current-buffer))
-            collect (markup:markup
-                     (:h3 (keymap:name keymap))
-                     (:table
-                      (loop for keyspec being the hash-keys in (keymap:keymap-with-parents->map keymap)
-                              using (hash-value bound-value)
-                            collect (markup:markup
-                                     (:tr
+    (spinneret:with-html-string
+      (:style (style buffer))
+      (:h1 "Bindings")
+      (:p
+       (loop for keymap in (current-keymaps (current-buffer))
+             collect (:div
+                      (:h3 (keymap:name keymap))
+                      (:table
+                       (loop for keyspec being the hash-keys in (keymap:keymap-with-parents->map keymap)
+                             using (hash-value bound-value)
+                             collect (:tr
                                       (:td keyspec)
-                                      (:td (string-downcase bound-value))))))))))))
+                                      (:td (string-downcase bound-value)))))))))))
 
 (defun tls-help (buffer url)
   "This function is invoked upon TLS certificate errors to give users
 help on how to proceed."
   (setf (slot-value buffer 'load-status) :failed)
   (html-set
-   (markup:markup
+   (spinneret:with-html-string
     (:h1 (format nil "TLS Certificate Error: ~a" (render-url url)))
     (:p "The address you are trying to visit has an invalid
 certificate. By default Nyxt refuses to establish a secure connection
@@ -499,7 +486,7 @@ evaluate in order."
 (defun error-buffer (title text)
   "Print some help."
   (with-current-html-buffer (buffer title 'nyxt/help-mode:help-mode)
-    (markup:markup
+    (spinneret:with-html-string
      (:style (style buffer))
      (:h1 "Error occured:")
      (:p text))))
@@ -533,7 +520,7 @@ The version number is stored in the clipboard."
   "Print help information."
   (with-current-html-buffer (buffer "*Help*" 'nyxt/help-mode:help-mode
                              :no-history-p no-history-p)
-    (markup:markup
+    (spinneret:with-html-string
      (:style (style buffer))
      (:style (cl-css:css '(("#documentation .button"
                             :min-width "100px"))))
@@ -556,21 +543,20 @@ The version number is stored in the clipboard."
 (define-command manual ()
   "Show the manual."
   (with-current-html-buffer (buffer "*Manual*" 'nyxt/help-mode:help-mode)
-    (str:concat (markup:markup (:style (style buffer)))
-                (manual-content))))
+    (spinneret:with-html-string (:style (style buffer))
+                                (:raw (manual-content)))))
 
 (define-command tutorial ()
   "Show the tutorial."
   (with-current-html-buffer (buffer "*Tutorial*" 'nyxt/help-mode:help-mode)
-    (str:concat
-     (markup:markup
+    (spinneret:with-html-string
       (:style (style buffer))
       (:h1 "Nyxt tutorial")
       (:p "The following tutorial introduces core concepts and
 basic usage.  For more details, especially regarding configuration, see
 the "
-          (:code (command-markup 'manual)) "."))
-     (tutorial-content))))
+          (:code (command-markup 'manual)) ".")
+      (:raw (tutorial-content)))))
 
 (defun system-information ()            ; TODO: Rename report-system-information?
   "Return a system information report as a string."
@@ -621,10 +607,11 @@ the "
   "Print a dashboard."
   (flet ((list-bookmarks (&key (separator " → "))
            (with-data-unsafe (bookmarks (bookmarks-path (current-buffer)))
-             (loop for bookmark in bookmarks
-                   collect (markup:markup (:li (title bookmark) separator
-                                               (:a :href (render-url (url bookmark))
-                                                   (render-url (url bookmark)))))))))
+             (spinneret:with-html-string
+               (loop for bookmark in bookmarks
+                     collect (:li (title bookmark) separator
+                                  (:a :href (render-url (url bookmark))
+                                      (render-url (url bookmark)))))))))
     (let ((dashboard-style (cl-css:css
                             '((body
                                :margin-top 0
@@ -645,39 +632,39 @@ the "
                               ("ul"
                                :list-style-type "circle")))))
       (with-current-html-buffer (buffer "*Dashboard*" 'base-mode)
-        (markup:markup
+        (spinneret:with-html-string
          (:style (style buffer))
          (:style dashboard-style)
          (:div :id "container"
                (:div :style "height: 210px"
                      (:h1 :id "title" "Nyxt " (:span :style "color: lightgray" "browser ☺"))
                      (:h3 (local-time:format-timestring nil (local-time:now) :format local-time:+rfc-1123-format+))
-                     (:a :class "button" :href (lisp-url `(nyxt::restore-session-by-name)) "🗁 Restore Session")
+                     (:a :class "button" :href (lisp-url `(nyxt::restore-history-by-name)) "🗁 Restore Session")
                      (:a :class "button" :href (lisp-url `(nyxt::execute-command)) "⚙ Execute Command")
                      (:a :class "button" :href (lisp-url `(nyxt::manual)) "🕮 Manual")
                      (:a :class "button" :href "https://nyxt.atlas.engineer/download" "⇡ Update"))
                (:div :class "section" :style "flex: 3"
                      (:h3 "🏷 " (:b "Bookmarks"))
-                     (:ul (list-bookmarks)))
+                     (:ul (:raw (list-bookmarks))))
                (:div :class "section" :style "flex: 5"
                      (:h3 "🗐 " (:b "Recent URLs"))
-                     (:ul (history-html-list)))))))))
+                     (:ul (:raw (history-html-list))))))))))
 
 (defun dump-command-descriptions (file)
   "Dump the command descriptions as an HTML file."
   (with-open-file (f file :direction :output :if-exists :supersede)
-    (format f "~a" (markup:markup
+    (format f "~a" (spinneret:with-html-string
                     (:p "Listed below are the current commands, their
                          documentation, and their source. Non-command
                          based features are currently unlisted.")
                     (:h1 "Commands")))
-    (format f "~a" (markup:markup
+    (format f "~a" (spinneret:with-html-string
                     (:style (cl-css:css
                              '((".nyxt-source"
                                 :overflow "auto"))))))
     (format f "~{~a ~%~}"
             (loop for command in (list-commands)
-                  collect (markup:markup
+                  collect (spinneret:with-html-string
                            (:details
                             (:summary (format nil "~(~a~)" (symbol-name (name command))))
                             (:p (:pre (documentation (fn command) t)))

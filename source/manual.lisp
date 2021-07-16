@@ -5,13 +5,12 @@
 
 (defun manual-content ()
   (str:concat
-   (markup:markup
+   (spinneret:with-html-string
     (:h1 "Nyxt manual")
     (:p "This manual first includes the tutorial, then covers the configuration
 of Nyxt."))
    (tutorial-content)
-   (markup:markup
-    (:h2 "Configuration")
+   (spinneret:with-html-string (:h2 "Configuration")
     (:p "Nyxt is written in the Common Lisp programming language which offers a
 great perk: everything in the browser can be customized by the user, even while
 it's running!")

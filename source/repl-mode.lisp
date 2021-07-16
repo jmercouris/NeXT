@@ -70,14 +70,14 @@
       (clear-input-buffer-text))))
 
 (defmethod initialize-display ((repl repl-mode))
-  (let* ((content (markup:markup
-                   (:head (:style (style repl)))
-                   (:body
-                    (:div :id "container"
-                          (:div :id "evaluation-history" "")
-                          (:div :id "input"
-                                (:span :id "prompt" ">")
-                                (:input :type "text" :id "input-buffer"))))))
+  (let* ((content (spinneret:with-html-string
+                    (:head (:style (style repl)))
+                    (:body
+                     (:div :id "container"
+                           (:div :id "evaluation-history" "")
+                           (:div :id "input"
+                                 (:span :id "prompt" ">")
+                                 (:input :type "text" :id "input-buffer"))))))
          (insert-content (ps:ps (ps:chain document
                                           (write (ps:lisp content))))))
     (ffi-buffer-evaluate-javascript-async (buffer repl) insert-content)))
@@ -87,10 +87,9 @@
 
 (defmethod update-evaluation-history-display ((repl repl-mode))
   (flet ((generate-evaluation-history-html (repl)
-           (markup:markup
+           (spinneret:with-html-string
             (:ul (loop for item in (reverse (evaluation-history repl))
-                       collect (markup:markup
-                                (:li item)))))))
+                       collect (:li item))))))
     (ffi-buffer-evaluate-javascript-async
      (buffer repl)
      (ps:ps (setf (ps:chain document (get-element-by-id "evaluation-history") |innerHTML|)

@@ -177,6 +177,7 @@
        ("clss" ,cl-clss)
        ("quri" ,cl-quri)
        ("serapeum" ,cl-serapeum)
+       ("spinneret" ,cl-spinneret)
        ("str" ,cl-str)
        ("swank" ,cl-slime-swank)
        ("trivia" ,cl-trivia)

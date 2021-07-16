@@ -30,7 +30,7 @@ get/set-content (which is necessary for operation)."
   (:documentation "This class is used to define a protocol for editors to implement."))
 
 (defmethod initialize-display ((editor editor-mode))
-  (let* ((content (markup:markup
+  (let* ((content (spinneret:with-html-string
                    (:head (:style (style (buffer editor))))
                    (:body (:p "Please configure an editor mode to use an editor buffer."))))
          (insert-content (ps:ps (ps:chain document (write (ps:lisp content))))))

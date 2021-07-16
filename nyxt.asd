@@ -51,6 +51,7 @@
                str
                plump
                clss
+               spinneret
                swank
                trivia
                trivial-clipboard

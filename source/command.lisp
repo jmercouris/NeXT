@@ -179,7 +179,7 @@ Example:
                                            :name ',name
                                            :docstring ,documentation
                                            :fn (symbol-function ',name)
-                                           :sexp '(define-command (,@arglist) ,@body)
+                                           :sexp '(define-command ,name (,@arglist) ,@body)
                                            :global-p ,global-p)))
            (unless ,deprecated-p
              ;; Overwrite previous command:

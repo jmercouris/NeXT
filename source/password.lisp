@@ -108,7 +108,7 @@ for which the `executable' slot is non-nil."
          ,@body)))
 
 (define-command copy-password-prompt-details (&optional (buffer (current-buffer)))
-  "Copy password prompting for all the details without suggestion."
+  "Copy password prompting for all the details without suggestions."
   (password-debug-info)
   (if (password-interface buffer)
       (let* ((password-name (first (prompt
